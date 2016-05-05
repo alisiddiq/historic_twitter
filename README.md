@@ -10,7 +10,8 @@ The twitter api is restricted to maximum two weeks worth of data for queries. Th
  (use 'historic_twitter.twitter)
  (in-ns 'historic_twitter.twitter)
  ```
- 3. Then call the function, specifying the query, location of the target csv and the since-date
+ 
+3. Then call the function, specifying the query, location of the target csv and the since-date
  ```Clojure
  (get-tweets "$CNA" "CNA.csv" "2008-01-01")
  ```
