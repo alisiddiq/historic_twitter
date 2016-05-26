@@ -5,6 +5,7 @@
             [clojure.data.csv :as csv]
             [clojure.string :as string]
             [clj-http.client :as client]
+            [clj-http.cookies :as cookies]
             [spyscope.core :as spy]
             [net.cgrand.enlive-html :as html]
             ))
@@ -17,7 +18,7 @@
                    :query-params query-params
                    :content-type content-type
                    :as           content-type
-                   :cookies      cookies}
+                   :cookie-store cookies}
                   )
   )
 
@@ -56,6 +57,8 @@
     {:max_position max-tweet-id :tweets extracted-tweets}
     ))
 
+(def cookie-store (cookies/cookie-store))
+
 (defn tweet-request-with-id
   "Can be used to continue a disrupted process of extracting tweets, new-id is the latest from the processes-ids.txt file, query parameter should be exactly the same as the original request"
   [new-id since-date query target-csv-location]
@@ -64,27 +67,31 @@
                      since-date)
         other-base-url "https://twitter.com/i/search/timeline"
         get-other-params-fn (fn [id]
-                              {:f "tweets" :vertical "news" :q query :src "typd" :max_position id :include_available_features "1" :include_entities "1" :reset_error_state "false"})
+                              {:f "tweets" :vertical "news" :q query :src "typd" :include_available_features "1" :include_entities "1" :max_position id :reset_error_state "false"})
         initial-tweets-map {:max_position new-id :tweets [{:date-time (t/now)}]}
         create-tweet-vector (fn [x] [(:date-formatted x) (:user x) (:tweet x) (:likes x) (:re-tweets x)])]
     (with-open [out-file (clojure.java.io/writer target-csv-location)]
-      (loop [td initial-tweets-map]
+      (loop [td initial-tweets-map
+             count 1]
         (let [last-date (:date-time (last (:tweets td)))]
-          (if (t/after? last-date since-date)
-            (let [tweets-data (extract-tweets-from-html (:body (http-get other-base-url :query-params (get-other-params-fn (:max_position td)) :content-type :json)))
-                  new-tweets-vector (mapv #(create-tweet-vector %) (:tweets tweets-data))]
-              (csv/write-csv out-file new-tweets-vector)
-              (spit "processed-ids.txt" [(:max_position tweets-data)] :append true)
-              (recur tweets-data)))))
-      )))
+          (if (nil? last-date)
+            (println "Scroll has run out of results, ending......")
+            (if (t/after? last-date since-date)
+              (let [tweets-data (extract-tweets-from-html (:body (http-get other-base-url :query-params (get-other-params-fn (:max_position td)) :cookies cookie-store :content-type :json)))
+                    new-tweets-vector (mapv #(create-tweet-vector %) (:tweets tweets-data))]
+                (csv/write-csv out-file new-tweets-vector)
+                (spit "processed-ids.txt" [(:max_position tweets-data)] :append true)
+                (println (str "Scroll #" count ", last Date " (:date-formatted (last (:tweets td)))))
+                (recur tweets-data (+ count 1)))))
+          )))))
 
 (defn get-tweets
   "Main function to call, with query, location of the output csv (e.g. out/tweets.csv) and since-date in format yyyy-mm-dd (by default it will go back 15 days)"
   [query target-csv-location & [since-date]]
-  (let [since-date  (or (tc #(f/parse (f/formatter "yyyy-MM-dd") since-date)) (t/ago (t/days 15)))
+  (let [since-date (or (tc #(f/parse (f/formatter "yyyy-MM-dd") since-date)) (t/ago (t/days 15)))
         first-base-url "https://twitter.com/search"
         initial-query-params {:f "tweets" :vertical "news" :q query :src "typd"}
-        first-request (http-get first-base-url :query-params initial-query-params)
+        first-request (http-get first-base-url :query-params initial-query-params :cookies cookie-store)
         initial-tweets-map (extract-tweets-from-html (:body first-request))
         create-tweet-vector (fn [x] [(:date-formatted x) (:user x) (:tweet x) (:likes x) (:re-tweets x)])
         tweets-vector (mapv #(create-tweet-vector %) (:tweets initial-tweets-map))
