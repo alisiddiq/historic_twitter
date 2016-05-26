@@ -6,8 +6,8 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [enlive "1.1.1"]
                  [spyscope "0.1.5"]
+                 [clj-webdriver "0.7.2"]
                  [clj-http "2.0.1"]
-                 [org.jsoup/jsoup "1.8.1"]
                  [org.clojure/data.csv "0.1.3"]]
   :main ^:skip-aot historic_twitter.core
   :target-path "target/%s"

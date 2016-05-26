@@ -61,13 +61,13 @@
 
 (defn tweet-request-with-id
   "Can be used to continue a disrupted process of extracting tweets, new-id is the latest from the processes-ids.txt file, query parameter should be exactly the same as the original request"
-  [new-id since-date query target-csv-location]
+  [new-id since-date query target-csv-location & [top]]
   (let [since-date (if (= java.lang.String (type since-date))
                      (or (tc #(f/parse (f/formatter "yyyy-MM-dd") since-date)) (t/ago (t/days 15)))
                      since-date)
         other-base-url "https://twitter.com/i/search/timeline"
         get-other-params-fn (fn [id]
-                              {:f "tweets" :vertical "news" :q query :src "typd" :include_available_features "1" :include_entities "1" :max_position id :reset_error_state "false"})
+                              {:vertical "news" :q query :src "typd" :include_available_features "1" :include_entities "1" :max_position id :reset_error_state "false"})
         initial-tweets-map {:max_position new-id :tweets [{:date-time (t/now)}]}
         create-tweet-vector (fn [x] [(:date-formatted x) (:user x) (:tweet x) (:likes x) (:re-tweets x)])]
     (with-open [out-file (clojure.java.io/writer target-csv-location)]
@@ -77,7 +77,9 @@
           (if (nil? last-date)
             (println "Scroll has run out of results, ending......")
             (if (t/after? last-date since-date)
-              (let [tweets-data (extract-tweets-from-html (:body (http-get other-base-url :query-params (get-other-params-fn (:max_position td)) :cookies cookie-store :content-type :json)))
+              (let [main-map (get-other-params-fn (:max_position td))
+                    query-params (if top main-map (assoc main-map :f "tweets"))
+                    tweets-data (extract-tweets-from-html (:body (http-get other-base-url :query-params query-params :cookies cookie-store :content-type :json)))
                     new-tweets-vector (mapv #(create-tweet-vector %) (:tweets tweets-data))]
                 (csv/write-csv out-file new-tweets-vector)
                 (spit "processed-ids.txt" [(:max_position tweets-data)] :append true)
@@ -86,11 +88,13 @@
           )))))
 
 (defn get-tweets
-  "Main function to call, with query, location of the output csv (e.g. out/tweets.csv) and since-date in format yyyy-mm-dd (by default it will go back 15 days)"
-  [query target-csv-location & [since-date]]
-  (let [since-date (or (tc #(f/parse (f/formatter "yyyy-MM-dd") since-date)) (t/ago (t/days 15)))
+  "Main function to call, with query, location of the output csv (e.g. out/tweets.csv) and since-date in format yyyy-mm-dd (by default it will go back 15 days). To get results from top tweets timeline, also add :top true"
+  [query target-csv-location & {:keys [since-date top]}]
+  (let [top (or top false)
+        since-date (or (tc #(f/parse (f/formatter "yyyy-MM-dd") since-date)) (t/ago (t/days 15)))
         first-base-url "https://twitter.com/search"
-        initial-query-params {:f "tweets" :vertical "news" :q query :src "typd"}
+        main-map {:vertical "news" :q query :src "typd"}
+        initial-query-params (if top main-map (assoc main-map :f "tweets"))
         first-request (http-get first-base-url :query-params initial-query-params :cookies cookie-store)
         initial-tweets-map (extract-tweets-from-html (:body first-request))
         create-tweet-vector (fn [x] [(:date-formatted x) (:user x) (:tweet x) (:likes x) (:re-tweets x)])
@@ -99,5 +103,5 @@
     (with-open [out-file (clojure.java.io/writer target-csv-location)]
       (csv/write-csv out-file csv-vector)
       (spit "processed-ids.txt" [(:max_position initial-tweets-map)]))
-    (tweet-request-with-id (:max_position initial-tweets-map) since-date query target-csv-location)
+    (tweet-request-with-id (:max_position initial-tweets-map) since-date query target-csv-location top)
     ))

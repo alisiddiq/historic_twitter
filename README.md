@@ -13,5 +13,7 @@ The twitter api is restricted to maximum two weeks worth of data for queries. Th
  
 3. Then call the function, specifying the query, location of the target csv and the since-date (defaults to 15 days ago, if not provided)
  ```Clojure
- (get-tweets "$CNA" "CNA.csv" "2008-01-01")
+ (get-tweets "$CNA" "CNA.csv" :since-date "2008-01-01" :top true) ;To get results from Top timeline
+ or
+ (get-tweets "$CNA" "CNA.csv" :since-date "2008-01-01") ;To get results from Live timeline
  ```
