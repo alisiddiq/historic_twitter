@@ -1,6 +1,5 @@
 # historic_twitter
-The twitter api is restricted to maximum two weeks worth of data for queries. Therefore I have developed another way, which just mimics the browser behaviour and gets all the data from the specified date. If it is accessible by browser, it is accessible by this method, the only difference is that you won't have to do the endless scrolling.
-
+The twitter api is restricted to maximum two weeks worth of data for queries. This method overcomes this restriction by using http libraries, and mimicking the scrolling behaviour on twitter. If data is accessible by browser, it is accessible by this method, the only difference is that you won't have to do the endless scrolling.
 
 ## Usage
 1. Load the repl
