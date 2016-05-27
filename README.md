@@ -17,7 +17,7 @@ The twitter api is restricted to maximum two weeks worth of data for queries. Th
  (get-tweets "$CNA" "CNA.csv" :since-date "2008-01-01") ;To get results from Live timeline
  ```
 
- ## Usage from JAR file
- ```Java
- java -jar historic_twitter.jar <QUERY> <CSV LOCATION> <optional SINCE-DATE> <optional TOP timeline flag>
- ```
+## Usage from JAR file
+```Java
+java -jar historic_twitter.jar <QUERY> <CSV LOCATION> <optional SINCE-DATE> <optional TOP timeline flag>
+```
