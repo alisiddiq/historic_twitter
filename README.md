@@ -1,7 +1,7 @@
 # historic_twitter
 The twitter api is restricted to maximum two weeks worth of data for queries. This method overcomes this restriction by using http libraries, and mimicking the scrolling behaviour on twitter. If data is accessible by browser, it is accessible by this method, the only difference is that you won't have to do the endless scrolling.
 
-## Usage
+## Usage from REPL
 1. Load the repl
 2. Then load the namespace in the repl
 
@@ -16,3 +16,7 @@ The twitter api is restricted to maximum two weeks worth of data for queries. Th
  or
  (get-tweets "$CNA" "CNA.csv" :since-date "2008-01-01") ;To get results from Live timeline
  ```
+
+ ## Usage from JAR file
+ java -jar historic_twitter.jar <QUERY> <CSV LOCATION> <optional SINCE-DATE> <optional TOP timeline flag>
+
