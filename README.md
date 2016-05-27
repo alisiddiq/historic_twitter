@@ -18,5 +18,6 @@ The twitter api is restricted to maximum two weeks worth of data for queries. Th
  ```
 
  ## Usage from JAR file
+ ```Java
  java -jar historic_twitter.jar <QUERY> <CSV LOCATION> <optional SINCE-DATE> <optional TOP timeline flag>
-
+ ```
