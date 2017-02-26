@@ -20,4 +20,9 @@ The twitter api is restricted to maximum two weeks worth of data for queries. Th
 ## Usage from JAR file
 ```Java
 java -jar historic_twitter.jar <QUERY> <CSV LOCATION> <optional SINCE-DATE (defaults to 15 days ago)> <optional TOP timeline flag (defaults to false)> <optional RETRY-ATTEMPTS (defaults to 10)>
+
+e.g.
+java -jar historic_twitter.jar \$CNA CNA.csv 2008-01-01
+
+// Use \ to escape special characters
 ```
